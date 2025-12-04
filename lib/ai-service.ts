@@ -9,10 +9,27 @@ export interface AnalysisResult {
     summary: string
 }
 
-export async function analyzeData(text: string): Promise<AnalysisResult> {
-    if (!AI_API_KEY || AI_API_KEY.includes("YOUR_API_KEY")) {
-        console.warn("No valid API key found, using heuristic fallback.")
-        return heuristicFallback(text)
+export interface AIError {
+    type: 'api_key' | 'network' | 'rate_limit' | 'invalid_response' | 'unknown'
+    message: string
+    canUseFallback: boolean
+}
+
+export async function analyzeData(text: string, useFallbackOnError = false): Promise<AnalysisResult> {
+    // Check for API key
+    if (!AI_API_KEY || AI_API_KEY.trim() === "" || AI_API_KEY.includes("YOUR_API_KEY")) {
+        const error: AIError = {
+            type: 'api_key',
+            message: 'AI API key is missing or invalid. Please add your OpenAI API key to the .env.local file.',
+            canUseFallback: true
+        }
+
+        if (useFallbackOnError) {
+            console.warn("No valid API key found, using heuristic fallback.")
+            return heuristicFallback(text)
+        }
+
+        throw error
     }
 
     try {
@@ -64,7 +81,41 @@ export async function analyzeData(text: string): Promise<AnalysisResult> {
         if (!response.ok) {
             const errorText = await response.text()
             console.error("OpenAI API Error:", response.status, errorText)
-            throw new Error(`API Error: ${response.statusText}`)
+
+            let error: AIError
+
+            if (response.status === 401) {
+                error = {
+                    type: 'api_key',
+                    message: 'Invalid API key. Please check your OpenAI API key in the .env.local file.',
+                    canUseFallback: true
+                }
+            } else if (response.status === 429) {
+                error = {
+                    type: 'rate_limit',
+                    message: 'Rate limit exceeded. Please try again in a few moments or check your OpenAI account quota.',
+                    canUseFallback: true
+                }
+            } else if (response.status >= 500) {
+                error = {
+                    type: 'network',
+                    message: 'OpenAI service is temporarily unavailable. Please try again later.',
+                    canUseFallback: true
+                }
+            } else {
+                error = {
+                    type: 'unknown',
+                    message: `API Error (${response.status}): ${response.statusText}`,
+                    canUseFallback: true
+                }
+            }
+
+            if (useFallbackOnError) {
+                console.warn("API error, using fallback:", error.message)
+                return heuristicFallback(text)
+            }
+
+            throw error
         }
 
         const json = await response.json()
@@ -75,7 +126,25 @@ export async function analyzeData(text: string): Promise<AnalysisResult> {
         return result
     } catch (error) {
         console.error("AI Analysis failed:", error)
-        return heuristicFallback(text)
+
+        // If it's already an AIError, rethrow it
+        if (error && typeof error === 'object' && 'type' in error && 'message' in error) {
+            throw error
+        }
+
+        // Network or parsing error
+        const aiError: AIError = {
+            type: 'network',
+            message: error instanceof Error ? error.message : 'Failed to connect to AI service. Please check your internet connection.',
+            canUseFallback: true
+        }
+
+        if (useFallbackOnError) {
+            console.warn("Network error, using fallback:", aiError.message)
+            return heuristicFallback(text)
+        }
+
+        throw aiError
     }
 }
 

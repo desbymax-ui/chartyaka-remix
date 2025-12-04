@@ -4,11 +4,12 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { ArrowRight, HelpCircle, Upload, Loader2, Sparkles } from "lucide-react"
+import { ArrowRight, HelpCircle, Upload, Loader2, Sparkles, AlertCircle, AlertTriangle } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import type { ChartData, ChartType } from "@/app/page"
 import Image from "next/image"
-import { analyzeData } from "@/lib/ai-service"
+import { analyzeData, type AIError } from "@/lib/ai-service"
 
 interface DataInputScreenProps {
   onSubmit: (data: ChartData, recommendations: ChartType[]) => void
@@ -23,22 +24,37 @@ March: 2000 sales, 9800 expenses`
 export function DataInputScreen({ onSubmit, onBack }: DataInputScreenProps) {
   const [inputData, setInputData] = useState("")
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState("")
+  const [error, setError] = useState<AIError | null>(null)
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (useFallback = false) => {
     if (!inputData.trim()) {
-      setError("Please enter your data")
+      setError({
+        type: 'unknown',
+        message: 'Please enter your data',
+        canUseFallback: false
+      })
       return
     }
 
     setIsLoading(true)
-    setError("")
+    setError(null)
 
     try {
-      const result = await analyzeData(inputData)
+      const result = await analyzeData(inputData, useFallback)
       onSubmit(result.data, result.recommendations)
     } catch (err) {
-      setError("Failed to analyze data. Please try again.")
+      console.error("Error analyzing data:", err)
+
+      // Check if it's an AIError
+      if (err && typeof err === 'object' && 'type' in err && 'message' in err) {
+        setError(err as AIError)
+      } else {
+        setError({
+          type: 'unknown',
+          message: 'An unexpected error occurred. Please try again.',
+          canUseFallback: true
+        })
+      }
     } finally {
       setIsLoading(false)
     }
@@ -138,10 +154,39 @@ export function DataInputScreen({ onSubmit, onBack }: DataInputScreenProps) {
               </p>
             </div>
 
-            {error && <p className="text-sm text-destructive">{error}</p>}
+            {/* Error Alert */}
+            {error && (
+              <Alert variant={error.type === 'api_key' ? 'warning' : 'destructive'}>
+                {error.type === 'api_key' ? (
+                  <AlertTriangle className="h-4 w-4" />
+                ) : (
+                  <AlertCircle className="h-4 w-4" />
+                )}
+                <AlertTitle>
+                  {error.type === 'api_key' && 'API Key Issue'}
+                  {error.type === 'rate_limit' && 'Rate Limit Exceeded'}
+                  {error.type === 'network' && 'Connection Error'}
+                  {error.type === 'unknown' && 'Error'}
+                </AlertTitle>
+                <AlertDescription>
+                  <p className="mb-2">{error.message}</p>
+                  {error.canUseFallback && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleSubmit(true)}
+                      disabled={isLoading}
+                      className="mt-2"
+                    >
+                      Use Basic Data Processing
+                    </Button>
+                  )}
+                </AlertDescription>
+              </Alert>
+            )}
           </div>
 
-          <Button onClick={handleSubmit} disabled={isLoading} className="w-full gap-2" size="lg">
+          <Button onClick={() => handleSubmit(false)} disabled={isLoading} className="w-full gap-2" size="lg">
             {isLoading ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
