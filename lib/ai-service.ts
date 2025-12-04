@@ -27,27 +27,30 @@ export async function analyzeData(text: string): Promise<AnalysisResult> {
                 messages: [
                     {
                         role: "system",
-                        content: `You are a data visualization expert. Analyze the user's raw text input and extract structured data suitable for charting.
+                        content: `You are a data visualization expert. Your goal is to transform raw, unstructured text into a clean, summarized dataset perfect for a chart.
+
+            Analyze the user's input and extract the key quantitative data.
             
-            Return ONLY valid JSON with the following structure:
+            CRITICAL RULES:
+            1. **Summarize & Aggregate**: Do NOT return more than 15 data points. If the data is large, aggregate it (e.g., sum by category, average by month, top 10 items).
+            2. **Clean Data**: Ensure the numeric values are pure numbers (no currency symbols, commas, or units in the value).
+            3. **Structure**: Return ONLY valid JSON matching the format below.
+            
+            JSON Structure:
             {
               "data": {
-                "title": "A short descriptive title for the chart",
-                "columns": ["Column1", "Column2"],
+                "title": "A concise, professional chart title",
+                "columns": ["LabelColumn", "ValueColumn"], // First column should be the label (string), second should be the value (number)
                 "data": [
-                  { "Column1": "Value1", "Column2": 10 },
-                  { "Column1": "Value2", "Column2": 20 }
+                  { "LabelColumn": "Jan", "ValueColumn": 100 },
+                  { "LabelColumn": "Feb", "ValueColumn": 200 }
                 ]
               },
-              "recommendations": ["bar", "line", "pie", "area"], // Pick 2-4 suitable chart types based on the data
-              "summary": "A brief 1-sentence summary of what this data represents"
+              "recommendations": ["bar", "line", "pie", "area"], // Select the best 2-3 types.
+              "summary": "A 1-sentence insight about the data."
             }
             
-            Rules:
-            1. "columns" must match the keys in the "data" objects.
-            2. Ensure at least one column is numeric.
-            3. "recommendations" must be a subset of ["bar", "line", "area", "pie"].
-            4. If the input is vague, infer reasonable data points.`,
+            If the input is vague or lacks numbers, infer a reasonable dataset that represents the *intent* of the text (e.g., if text says "sales are growing", generate a growing trend).`,
                     },
                     {
                         role: "user",
@@ -59,11 +62,14 @@ export async function analyzeData(text: string): Promise<AnalysisResult> {
         })
 
         if (!response.ok) {
+            const errorText = await response.text()
+            console.error("OpenAI API Error:", response.status, errorText)
             throw new Error(`API Error: ${response.statusText}`)
         }
 
         const json = await response.json()
         const content = json.choices[0].message.content
+        console.log("AI Raw Response:", content) // Debug log
         const result = JSON.parse(content) as AnalysisResult
 
         return result
