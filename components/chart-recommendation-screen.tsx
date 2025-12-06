@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { ArrowLeft, ArrowRight, BarChart3, LineChart, PieChart, Activity } from "lucide-react"
+import { ArrowLeft, ArrowRight, BarChart3, LineChart, PieChart, Activity, GitBranch, Network, Workflow, Brain } from "lucide-react"
 import type { ChartType, ChartData } from "@/app/page"
 import { ChartPreview } from "@/components/chart-preview"
 
@@ -29,6 +29,10 @@ export function ChartRecommendationScreen({
             case "line": return <LineChart className="w-6 h-6" />
             case "pie": return <PieChart className="w-6 h-6" />
             case "area": return <Activity className="w-6 h-6" />
+            case "flow": return <Workflow className="w-6 h-6" />
+            case "tree": return <GitBranch className="w-6 h-6" />
+            case "org": return <Network className="w-6 h-6" />
+            case "mindmap": return <Brain className="w-6 h-6" />
             default: return <BarChart3 className="w-6 h-6" />
         }
     }
@@ -39,6 +43,10 @@ export function ChartRecommendationScreen({
             case "line": return "Line Chart"
             case "pie": return "Pie Chart"
             case "area": return "Area Chart"
+            case "flow": return "Flow Diagram"
+            case "tree": return "Tree Diagram"
+            case "org": return "Org Chart"
+            case "mindmap": return "Mind Map"
             default: return "Chart"
         }
     }
@@ -49,7 +57,11 @@ export function ChartRecommendationScreen({
             case "line": return "Ideal for trends over time."
             case "pie": return "Good for showing proportions."
             case "area": return "Great for volume trends."
-            default: return "Standard chart visualization."
+            case "flow": return "Perfect for processes and workflows."
+            case "tree": return "Ideal for hierarchies and structures."
+            case "org": return "Great for organizational charts."
+            case "mindmap": return "Best for concepts and ideas."
+            default: return "Standard visualization."
         }
     }
 
@@ -93,7 +105,7 @@ export function ChartRecommendationScreen({
                                         <ChartPreview
                                             data={data}
                                             chartType={type}
-                                            styles={{ colorPalette: ["#8884d8", "#82ca9d", "#ffc658"], showGrid: false, showLegend: false }}
+                                            styles={{ showGrid: false, showLegend: false }}
                                         />
                                     </div>
                                 </CardContent>

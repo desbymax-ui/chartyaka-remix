@@ -44,30 +44,39 @@ export async function analyzeData(text: string, useFallbackOnError = false): Pro
                 messages: [
                     {
                         role: "system",
-                        content: `You are a data visualization expert. Your goal is to transform raw, unstructured text into a clean, summarized dataset perfect for a chart.
+                        content: `You are a data visualization and diagram expert. Analyze the user's text to understand its structure and recommend the most appropriate visualizations.
 
-            Analyze the user's input and extract the key quantitative data.
+            ANALYZE THE TEXT FOR:
+            1. **Processes/Workflows**: Sequential steps, procedures, algorithms → Recommend "flow" diagram
+            2. **Hierarchies**: Organizational structures, taxonomies, parent-child relationships → Recommend "tree" or "org" diagram
+            3. **Concepts/Ideas**: Brainstorming, interconnected thoughts, knowledge maps → Recommend "mindmap" diagram
+            4. **Quantitative Data**: Numbers, metrics, statistics → Recommend charts ("bar", "line", "pie", "area")
             
             CRITICAL RULES:
-            1. **Summarize & Aggregate**: Do NOT return more than 15 data points. If the data is large, aggregate it (e.g., sum by category, average by month, top 10 items).
-            2. **Clean Data**: Ensure the numeric values are pure numbers (no currency symbols, commas, or units in the value).
-            3. **Structure**: Return ONLY valid JSON matching the format below.
+            1. **Summarize & Aggregate**: Do NOT return more than 15 data points. If the data is large, aggregate it.
+            2. **Clean Data**: Ensure numeric values are pure numbers (no currency symbols, commas, or units).
+            3. **Smart Recommendations**: Recommend 2-4 visualization types that BEST fit the text content.
+               - For processes: prioritize "flow"
+               - For hierarchies: prioritize "tree" or "org"
+               - For concepts: prioritize "mindmap"
+               - For metrics: prioritize charts
+            4. **Structure**: Return ONLY valid JSON matching the format below.
             
             JSON Structure:
             {
               "data": {
-                "title": "A concise, professional chart title",
-                "columns": ["LabelColumn", "ValueColumn"], // First column should be the label (string), second should be the value (number)
+                "title": "A concise, professional title",
+                "columns": ["LabelColumn", "ValueColumn"], // First column = label (string), second = value (number or string for diagrams)
                 "data": [
-                  { "LabelColumn": "Jan", "ValueColumn": 100 },
-                  { "LabelColumn": "Feb", "ValueColumn": 200 }
+                  { "LabelColumn": "Step 1", "ValueColumn": "Description" },
+                  { "LabelColumn": "Step 2", "ValueColumn": "Description" }
                 ]
               },
-              "recommendations": ["bar", "line", "pie", "area"], // Select the best 2-3 types.
-              "summary": "A 1-sentence insight about the data."
+              "recommendations": ["flow", "tree", "bar"], // 2-4 types that best fit the content
+              "summary": "A 1-sentence insight about the data or structure."
             }
             
-            If the input is vague or lacks numbers, infer a reasonable dataset that represents the *intent* of the text (e.g., if text says "sales are growing", generate a growing trend).`,
+            For diagrams, the data structure should represent nodes/steps. For charts, use numeric values.`,
                     },
                     {
                         role: "user",
@@ -200,12 +209,20 @@ function parseCSV(csv: string): ChartData | null {
 function recommendCharts(data: ChartData): ChartType[] {
     const rowCount = data.data.length
     const hasNumeric = data.data.some((row) => Object.values(row).some((v) => typeof v === "number"))
+    const hasStringValues = data.data.some((row) => Object.values(row).some((v) => typeof v === "string" && v.length > 20))
 
+    // If data has long string values, it's likely process/concept data
+    if (hasStringValues) {
+        return ["flow", "tree", "mindmap"]
+    }
+
+    // If numeric data exists, recommend charts
     if (rowCount > 10 && hasNumeric) {
         return ["line", "area", "bar"]
     } else if (rowCount <= 10 && hasNumeric) {
         return ["bar", "pie", "line"]
     }
 
-    return ["bar", "line", "area", "pie"]
+    // Default to diagram types for non-numeric data
+    return ["flow", "tree", "bar", "mindmap"]
 }

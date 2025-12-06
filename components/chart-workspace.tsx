@@ -18,49 +18,21 @@ interface ChartWorkspaceProps {
 }
 
 export interface ChartStyles {
-  colorPalette: string[]
   showGrid: boolean
   showLegend: boolean
 }
 
-const colorPalettes = {
-  default: ["#ED2A66", "#FF8A00", "#C6283D", "#FF6B9D", "#FFB347"],
-  ocean: ["#0077b6", "#00b4d8", "#90e0ef", "#caf0f8", "#03045e"],
-  sunset: ["#FF2D6D", "#FF8A00", "#FFB347", "##FF6B9D", "#C6283D"],
-  forest: ["#2d6a4f", "#40916c", "#52b788", "#74c69d", "#95d5b2"],
-  monochrome: ["#450C23", "#6B1A3A", "#8B2A4A", "#AB3A5A", "#CB4A6A"],
-}
-
 export function ChartWorkspace({ chartData, chartType, onChartTypeChange, onBack }: ChartWorkspaceProps) {
   const [styles, setStyles] = useState<ChartStyles>({
-    colorPalette: colorPalettes.default,
     showGrid: true,
     showLegend: true,
   })
   const [currentData, setCurrentData] = useState(chartData)
   const [showExport, setShowExport] = useState(false)
-  const [selectedPalette, setSelectedPalette] = useState<string>("default")
-  const [customPalettes, setCustomPalettes] = useState<Array<{ id: string; colors: string[] }>>([])
   const [leftPanelOpen, setLeftPanelOpen] = useState(true)
   const [rightPanelOpen, setRightPanelOpen] = useState(true)
-  const [leftPanelWidth, setLeftPanelWidth] = useState(256) // 256px = w-64
+  const [leftPanelWidth, setLeftPanelWidth] = useState(256)
   const [isResizing, setIsResizing] = useState(false)
-
-  const handlePaletteChange = (palette: string) => {
-    setSelectedPalette(palette)
-
-    // Check if it's a custom palette
-    const customPalette = customPalettes.find(p => p.id === palette)
-    if (customPalette) {
-      setStyles((prev) => ({ ...prev, colorPalette: customPalette.colors }))
-    } else if (palette in colorPalettes) {
-      setStyles((prev) => ({ ...prev, colorPalette: colorPalettes[palette as keyof typeof colorPalettes] }))
-    }
-  }
-
-  const handleCustomPalettesChange = (palettes: Array<{ id: string; colors: string[] }>) => {
-    setCustomPalettes(palettes)
-  }
 
   // Handle resizing with click-to-toggle behavior
   useEffect(() => {
@@ -193,11 +165,6 @@ export function ChartWorkspace({ chartData, chartType, onChartTypeChange, onBack
             <StylePanel
               styles={styles}
               onStyleChange={setStyles}
-              selectedPalette={selectedPalette}
-              onPaletteChange={handlePaletteChange}
-              colorPalettes={colorPalettes}
-              customPalettes={customPalettes}
-              onCustomPalettesChange={handleCustomPalettesChange}
             />
           </div>
         )}

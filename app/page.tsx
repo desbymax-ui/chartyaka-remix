@@ -7,7 +7,7 @@ import { TemplateSelectionScreen } from "@/components/template-selection-screen"
 import { ChartWorkspace } from "@/components/chart-workspace"
 import { ChartRecommendationScreen } from "@/components/chart-recommendation-screen"
 
-export type ChartType = "bar" | "line" | "area" | "pie"
+export type ChartType = "bar" | "line" | "area" | "pie" | "flow" | "tree" | "org" | "mindmap"
 
 export interface ChartData {
   title: string

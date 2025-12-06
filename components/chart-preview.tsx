@@ -21,6 +21,8 @@ import {
 import type { ChartType, ChartData } from "@/app/page"
 import type { ChartStyles } from "@/components/chart-workspace"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { DiagramPreview } from "@/components/diagram-preview"
+import { getRandomPalette } from "@/lib/color-generator"
 import type React from "react"
 
 interface ChartPreviewProps {
@@ -30,7 +32,9 @@ interface ChartPreviewProps {
 }
 
 export function ChartPreview({ data, chartType, styles }: ChartPreviewProps) {
-  const { colorPalette, showGrid, showLegend } = styles
+  // Use randomized colors instead of the styles colorPalette
+  const colorPalette = useMemo(() => getRandomPalette(), [])
+  const { showGrid, showLegend } = styles
 
   const { numericColumns, labelColumn } = useMemo(() => {
     const firstRow = data.data[0]
@@ -49,6 +53,9 @@ export function ChartPreview({ data, chartType, styles }: ChartPreviewProps) {
     color: "#fff",
   }
 
+  // Check if it's a diagram type
+  const isDiagram = chartType === "flow" || chartType === "tree" || chartType === "org" || chartType === "mindmap"
+
   if (!data.data.length || !data.columns.length) {
     return (
       <Card className="w-full max-w-3xl">
@@ -58,6 +65,22 @@ export function ChartPreview({ data, chartType, styles }: ChartPreviewProps) {
         <CardContent>
           <div className="h-[400px] w-full flex items-center justify-center text-muted-foreground">
             No data available
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  // Render diagram if it's a diagram type
+  if (isDiagram) {
+    return (
+      <Card className="w-full max-w-3xl">
+        <CardHeader>
+          <CardTitle>{data.title}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[400px] w-full">
+            <DiagramPreview data={data} diagramType={chartType as "flow" | "tree" | "org" | "mindmap"} />
           </div>
         </CardContent>
       </Card>
@@ -147,7 +170,7 @@ export function ChartPreview({ data, chartType, styles }: ChartPreviewProps) {
     )
   }
 
-  const chartComponents: Record<ChartType, () => React.ReactElement> = {
+  const chartComponents: Partial<Record<ChartType, () => React.ReactElement>> = {
     bar: renderBarChart,
     line: renderLineChart,
     area: renderAreaChart,
@@ -162,7 +185,7 @@ export function ChartPreview({ data, chartType, styles }: ChartPreviewProps) {
       <CardContent>
         <div className="h-[400px] w-full">
           <ResponsiveContainer width="100%" height="100%">
-            {chartComponents[chartType]()}
+            {chartComponents[chartType]?.() || <div>Unsupported chart type</div>}
           </ResponsiveContainer>
         </div>
       </CardContent>

@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { BarChart3, LineChart, AreaChart, PieChart } from "lucide-react"
+import { BarChart3, LineChart, AreaChart, PieChart, Workflow, GitBranch, Network, Brain } from "lucide-react"
 import type { ChartType } from "@/app/page"
 import { cn } from "@/lib/utils"
 
@@ -16,6 +16,10 @@ const chartTypes: { type: ChartType; icon: React.ElementType; name: string }[] =
   { type: "line", icon: LineChart, name: "Line" },
   { type: "area", icon: AreaChart, name: "Area" },
   { type: "pie", icon: PieChart, name: "Pie" },
+  { type: "flow", icon: Workflow, name: "Flow" },
+  { type: "tree", icon: GitBranch, name: "Tree" },
+  { type: "org", icon: Network, name: "Org" },
+  { type: "mindmap", icon: Brain, name: "Mind" },
 ]
 
 export function TemplateSidebar({ selectedType, onTypeChange }: TemplateSidebarProps) {
