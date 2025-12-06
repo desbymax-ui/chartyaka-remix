@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { ArrowLeft, ArrowRight, BarChart3, LineChart, PieChart, Activity, GitBranch, Network, Workflow, Brain } from "lucide-react"
 import type { ChartType, ChartData } from "@/app/page"
 import { ChartPreview } from "@/components/chart-preview"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 interface ChartRecommendationScreenProps {
     data: ChartData
@@ -67,11 +68,12 @@ export function ChartRecommendationScreen({
 
     return (
         <div className="min-h-screen flex flex-col bg-background">
-            <header className="border-b border-border px-4 py-3 bg-card flex items-center">
+            <header className="border-b border-border px-4 py-3 bg-card flex items-center justify-between">
                 <Button variant="ghost" size="sm" onClick={onBack} className="gap-2">
                     <ArrowLeft className="w-4 h-4" />
                     Back
                 </Button>
+                <ThemeToggle />
             </header>
 
             <div className="flex-1 container mx-auto px-4 py-8">

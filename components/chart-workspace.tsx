@@ -9,6 +9,7 @@ import { DataPanel } from "@/components/data-panel"
 import { TemplateSidebar } from "@/components/template-sidebar"
 import { StylePanel } from "@/components/style-panel"
 import { ExportModal } from "@/components/export-modal"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 interface ChartWorkspaceProps {
   chartData: ChartData
@@ -79,10 +80,13 @@ export function ChartWorkspace({ chartData, chartType, onChartTypeChange, onBack
             Back to Start
           </Button>
         </div>
-        <Button onClick={() => setShowExport(true)} className="gap-2">
-          <Download className="w-4 h-4" />
-          Export
-        </Button>
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <Button onClick={() => setShowExport(true)} className="gap-2">
+            <Download className="w-4 h-4" />
+            Export
+          </Button>
+        </div>
       </header>
 
       {/* Main Content */}

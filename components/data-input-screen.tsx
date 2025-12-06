@@ -10,6 +10,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import type { ChartData, ChartType } from "@/app/page"
 import Image from "next/image"
 import { analyzeData, type AIError } from "@/lib/ai-service"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 interface DataInputScreenProps {
   onSubmit: (data: ChartData, recommendations: ChartType[]) => void
@@ -68,8 +69,9 @@ export function DataInputScreen({ onSubmit, onBack }: DataInputScreenProps) {
     <div className="min-h-screen flex flex-col">
       {/* Header */}
       <header className="border-b border-border px-4 py-3 bg-card">
-        <div className="flex items-center">
+        <div className="flex items-center justify-between">
           <Image src="/logo.svg" alt="ChartFlow" width={140} height={35} priority />
+          <ThemeToggle />
         </div>
       </header>
 
